@@ -20,8 +20,11 @@ import {
   TouchableHighlight,
   TouchableWithoutFeedback,
   Animated,
+  Pressable,
 } from 'react-native';
 
+import { NavigationContainer } from '@react-navigation/native'
+import { createStackNavigator } from '@react-navigation/stack'
 import {
   Colors,
   DebugInstructions,
@@ -31,46 +34,43 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 const Constant = {
-  animDuration: 250,
+  animDuration: 285,
 }
 
-const Section = ({ children, title }) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+const Stack = createStackNavigator()
 
-const App = () => {
+const HomeScreen = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';
   const [ isActive, setActive ] = useState(false)
+  
+  const colorValue = isActive ? 1 : 0
+  const animColor = useRef(new Animated.Value(0)).current
+  const interpolatedColor = animColor.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(86, 86, 86, 0.9)', 'rgba(0, 255, 0, 1)']
+  })
+
+  const animatedTextColor = animColor.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(14, 14, 18, 1)', 'rgba(248, 212, 12, 1)']
+  })
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   }
 
+  useEffect(() => {
+    Animated.timing(
+      animColor, {
+        toValue: colorValue,
+        duration: Constant.animDuration,
+        useNativeDriver: false,
+      }
+    ).start()
+  }, [isActive])
+
   const onPress = () => {
     console.log(`isActive = ${isActive}`);
-    
     setActive(!isActive)
   }
 
@@ -78,12 +78,12 @@ const App = () => {
     // <SafeAreaView style={backgroundStyle}>
     //   <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
     // </SafeAreaView>
-    <View style={styles.topContainer}>
-      {
-        isActive ? 
-        <Text style={styles.statusTitle}>Active</Text> : 
-        <Text style={styles.statusTitle}>Inactive</Text>
-      }
+    <Animated.View style={[styles.topContainer, {
+      backgroundColor: interpolatedColor,
+    }]}>
+      <Animated.Text style={[styles.statusTitle, {
+        color: animatedTextColor,
+      }]}>{isActive ? "Active" : "Inactive"}</Animated.Text>
       <TouchableWithoutFeedback onPress={onPress}>
         <View style={{
           width: "100%",
@@ -91,17 +91,30 @@ const App = () => {
           <FlexNumericView isActive={isActive}></FlexNumericView>
         </View>
       </TouchableWithoutFeedback>
-      <Text style={styles.navButton}>네비게이션</Text>
-    </View>
+      {/* <Text style={styles.navButton}>네비게이션</Text> */}
+      <Button
+        title="Go to detail" 
+        color={animatedTextColor}
+        onPress={ () => navigation.push('Detail') }/>
+
+    </Animated.View>
   );
 };
+
+const DetailScreen = ({ navigation }) => {
+  return (
+    <View style={styles.topContainer}>
+      <Text>Detail View</Text>
+    </View>
+  )
+}
 
 const FlexNumericView = ({ isActive }) => {
   const anim = useRef(new Animated.Value(30)).current
   const animColor = useRef(new Animated.Value(0)).current
   const interpolatedColor = animColor.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(0, 0, 0, 1)', 'rgba(121, 244, 182, 1)'],
+    outputRange: ['rgba(0, 0, 0, 1)', 'rgba(255, 212, 0, 1)'],
   })
 
   useEffect(() => {
@@ -167,6 +180,32 @@ const VerticalText = ({ isActive }) => {
   )
 }
 
+const App = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Detail" component={DetailScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  )
+}
+
+function Button(props) {
+  const { onPress, title = 'Next', color } = props
+  console.log(`Button: color = ${color}`);
+  
+  return (
+    <Animated.View style={[styles.navButton, {
+      backgroundColor: color,
+    }]}>
+      <Pressable onPress={onPress}>
+        <Text style={styles.buttonText}>{title}</Text>
+      </Pressable>
+    </Animated.View>
+  )
+}
+
 const styles = StyleSheet.create({
   topContainer: {
     display: "flex",
@@ -174,7 +213,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flex: 1,
-    backgroundColor: "gray",
   },
   sectionContainer: {
     marginTop: 32,
@@ -208,6 +246,7 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     justifyContent: "center",
+    marginVertical: 12,
   },
   innerWrap: {
     display: "flex",
@@ -217,13 +256,19 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   navButton: {
-    fontSize: 40,
-    fontWeight: '900',
-    width: "100%",
-    textAlign: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 12,
+    padding: 12,
+    backgroundColor: "black",
+    borderRadius: 10,
+    elevation: 3,
+  },
+  buttonText: {
+    fontSize: 32,
+    fontWeight: '700',
     color: "white",
     paddingVertical: 10,
-    marginVertical: 40,
   }
 });
 
