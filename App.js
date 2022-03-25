@@ -75,9 +75,6 @@ const HomeScreen = ({ navigation }) => {
   }
 
   return (
-    // <SafeAreaView style={backgroundStyle}>
-    //   <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-    // </SafeAreaView>
     <Animated.View style={[styles.topContainer, {
       backgroundColor: interpolatedColor,
     }]}>
@@ -91,20 +88,19 @@ const HomeScreen = ({ navigation }) => {
           <FlexNumericView isActive={isActive}></FlexNumericView>
         </View>
       </TouchableWithoutFeedback>
-      {/* <Text style={styles.navButton}>네비게이션</Text> */}
       <Button
         title="Go to detail" 
         color={animatedTextColor}
-        onPress={ () => navigation.push('Detail') }/>
-
+        onPress={ () => navigation.push('Detail', {isActive: isActive}) }/>
     </Animated.View>
   );
 };
 
-const DetailScreen = ({ navigation }) => {
+const DetailScreen = (props) => {
+  console.log(`props = ${JSON.stringify(props)}`);
   return (
     <View style={styles.topContainer}>
-      <Text>Detail View</Text>
+      <Text style={styles.statusTitle}>활성화 상태: { props.route.params.isActive ? "true" : "false" }</Text>
     </View>
   )
 }
@@ -193,7 +189,6 @@ const App = () => {
 
 function Button(props) {
   const { onPress, title = 'Next', color } = props
-  console.log(`Button: color = ${color}`);
   
   return (
     <Animated.View style={[styles.navButton, {
@@ -261,7 +256,7 @@ const styles = StyleSheet.create({
     margin: 12,
     padding: 12,
     backgroundColor: "black",
-    borderRadius: 10,
+    borderRadius: 24,
     elevation: 3,
   },
   buttonText: {
